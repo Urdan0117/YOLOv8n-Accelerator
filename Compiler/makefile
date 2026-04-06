@@ -1,7 +1,7 @@
 
 
 run: 
-	python quick.py
+	python main.py
 
 sim:
 	python npu_iss.py
