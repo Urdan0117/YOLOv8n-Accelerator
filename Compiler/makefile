@@ -10,4 +10,4 @@ valid:
 	python validation.py
 
 clean:
-	rm -f full_instructions.txt cpu_runtime.py npu_program.hex weights.bin weights.hex
+	rm -f ../Build/full_instructions.txt ../Build/cpu_runtime.py ../Build/npu_program.hex ../Build/weights.bin ../Build/weights.hex

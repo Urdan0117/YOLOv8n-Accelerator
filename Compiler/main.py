@@ -8,23 +8,26 @@ from assembler import text_to_hex_full
 
 def main():
     # 1. Load the ONNX model
-    model_path = "../Model/train/weights/best.onnx"
+    model_path = "../Model/train/weights/best_int8.onnx"
     onnx_model = onnx.load(model_path)
     mod, params = relay.frontend.from_onnx(onnx_model, {"images": (1, 3, 640, 640)})
     
-    print("Running optimization passes and INT8 weight quantization...")
-    
+    #print(mod)
+    print("Running optimization passes and INT8 weight quantization")
+
     # 2. Apply TVM optimization passes
-    with tvm.transform.PassContext(opt_level=3):
+    with tvm.transform.PassContext(opt_level=1):
         mod["main"] = relay.build_module.bind_params_by_name(mod["main"], params)
         mod = relay.transform.InferType()(mod)
+        mod = relay.transform.FakeQuantizationToInteger()(mod)
         mod = relay.transform.FoldConstant()(mod) 
-        mod_fused = relay.transform.FuseOps(fuse_opt_level=3)(mod)
-        mod_fused = relay.transform.InferType()(mod_fused) 
+        # mod = relay.transform.FuseOps(fuse_opt_level = 1)(mod)
+        # mod = relay.transform.InferType()(mod_fused) 
+        # print(mod)
         
         # 3. Execute the instruction emitter
         emitter = NPUFullProgramEmitter(params)
-        emitter.visit(mod_fused["main"])
+        emitter.visit(mod["main"])
         
     emitter.instructions.append("OP:HALT   | IN:0x00000000 | WGT:0x00000000 | OUT:0x00000000 | FLAGS:0x0 | STRIDE:0 | PAD:0 | KERNEL:0")
     
